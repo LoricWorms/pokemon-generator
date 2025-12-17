@@ -6,11 +6,11 @@ import { AppAlert, AlertType } from '../types';
 interface ModalProps {
   alert: AppAlert;
   onClose: () => void;
-  title?: string;
+  // Remove title prop, as it's now part of AppAlert
   children?: React.ReactNode;
 }
 
-const Modal: React.FC<ModalProps> = ({ alert, onClose, title, children }) => {
+const Modal: React.FC<ModalProps> = ({ alert, onClose, children }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -55,7 +55,8 @@ const Modal: React.FC<ModalProps> = ({ alert, onClose, title, children }) => {
       >
         <div className={`flex items-center justify-between p-4 text-white ${getHeaderColorClass(alert.type)}`}>
           <h3 className="text-lg font-semibold" id="modal-title">
-            {title || alert.type.charAt(0).toUpperCase() + alert.type.slice(1).toLowerCase()}
+            {/* Use alert.title directly */}
+            {alert.title}
           </h3>
           <button
             onClick={onClose}

@@ -3,7 +3,7 @@ import { Pokemon, UserSetting } from '../types';
 
 const DB_NAME = 'PokemonGeneratorDB';
 const DB_VERSION = 1; // Increment this to trigger onupgradeneeded
-const POKEMON_STORE_NAME = 'pokemon';
+const POKEMON_STORE_NAME = 'pokemons';
 const USER_SETTINGS_STORE_NAME = 'userSettings';
 
 let db: IDBDatabase | null = null;
@@ -53,8 +53,8 @@ export const openDB = (): Promise<IDBDatabase> => {
 };
 
 /**
- * Adds a new Pokémon to the object store.
- * @param pokemonData - The Pokémon data to add (excluding the ID).
+ * Adds a new Pokemon to the object store.
+ * @param pokemonData - The Pokemon data to add (excluding the ID).
  * @returns A Promise that resolves with the newly created Pokemon, including its ID.
  */
 export const addPokemon = (pokemonData: Omit<Pokemon, 'id'>): Promise<Pokemon> => {
@@ -74,14 +74,14 @@ export const addPokemon = (pokemonData: Omit<Pokemon, 'id'>): Promise<Pokemon> =
 
       request.onerror = (event: Event) => {
         const requestTarget = event.target as IDBRequest;
-        console.error(`Error adding Pokémon: ${requestTarget.error?.message}`);
-        reject(new Error(`Failed to add Pokémon: ${requestTarget.error?.message}`));
+        console.error(`Error adding pokemon: ${requestTarget.error?.message}`);
+        reject(new Error(`Failed to add pokemon: ${requestTarget.error?.message}`));
       };
 
       transaction.onerror = (event: Event) => {
         const transactionTarget = event.target as IDBTransaction;
-        console.error(`Transaction error adding Pokémon: ${transactionTarget.error?.message}`);
-        reject(new Error(`Transaction failed to add Pokémon: ${transactionTarget.error?.message}`));
+        console.error(`Transaction error adding pokemon: ${transactionTarget.error?.message}`);
+        reject(new Error(`Transaction failed to add pokemon: ${transactionTarget.error?.message}`));
       };
 
     } catch (error: any) {
@@ -91,7 +91,7 @@ export const addPokemon = (pokemonData: Omit<Pokemon, 'id'>): Promise<Pokemon> =
 };
 
 /**
- * Retrieves all Pokémon from the object store.
+ * Retrieves all Pokemon from the object store.
  * @returns A Promise that resolves with an array of Pokemon.
  */
 export const getAllPokemon = (): Promise<Pokemon[]> => {
@@ -103,20 +103,20 @@ export const getAllPokemon = (): Promise<Pokemon[]> => {
       const request = store.getAll();
 
       request.onsuccess = () => {
-        console.log('All Pokémon retrieved successfully.');
+        console.log('All pokemon retrieved successfully.');
         resolve(request.result as Pokemon[]);
       };
 
       request.onerror = (event: Event) => {
         const requestTarget = event.target as IDBRequest;
-        console.error(`Error getting all Pokémon: ${requestTarget.error?.message}`);
-        reject(new Error(`Failed to get all Pokémon: ${requestTarget.error?.message}`));
+        console.error(`Error getting all pokemon: ${requestTarget.error?.message}`);
+        reject(new Error(`Failed to get all pokemon: ${requestTarget.error?.message}`));
       };
 
       transaction.onerror = (event: Event) => {
         const transactionTarget = event.target as IDBTransaction;
-        console.error(`Transaction error getting all Pokémon: ${transactionTarget.error?.message}`);
-        reject(new Error(`Transaction failed to get all Pokémon: ${transactionTarget.error?.message}`));
+        console.error(`Transaction error getting all pokemon: ${transactionTarget.error?.message}`);
+        reject(new Error(`Transaction failed to get all pokemon: ${transactionTarget.error?.message}`));
       };
 
     } catch (error: any) {
@@ -126,9 +126,9 @@ export const getAllPokemon = (): Promise<Pokemon[]> => {
 };
 
 /**
- * Deletes a Pokémon from the object store by its ID.
- * @param id - The ID of the Pokémon to delete.
- * @returns A Promise that resolves when the Pokémon is successfully deleted.
+ * Deletes a Pokemon from the object store by its ID.
+ * @param id - The ID of the Pokemon to delete.
+ * @returns A Promise that resolves when the Pokemon is successfully deleted.
  */
 export const deletePokemon = (id: number): Promise<void> => {
   return new Promise(async (resolve, reject) => {
@@ -139,20 +139,20 @@ export const deletePokemon = (id: number): Promise<void> => {
       const request = store.delete(id);
 
       request.onsuccess = () => {
-        console.log(`Pokémon with ID ${id} deleted successfully.`);
+        console.log(`Pokemon with ID ${id} deleted successfully.`);
         resolve();
       };
 
       request.onerror = (event: Event) => {
         const requestTarget = event.target as IDBRequest;
-        console.error(`Error deleting Pokémon ${id}: ${requestTarget.error?.message}`);
-        reject(new Error(`Failed to delete Pokémon ${id}: ${requestTarget.error?.message}`));
+        console.error(`Error deleting pokemon ${id}: ${requestTarget.error?.message}`);
+        reject(new Error(`Failed to delete pokemon ${id}: ${requestTarget.error?.message}`));
       };
 
       transaction.onerror = (event: Event) => {
         const transactionTarget = event.target as IDBTransaction;
-        console.error(`Transaction error deleting Pokémon ${id}: ${transactionTarget.error?.message}`);
-        reject(new Error(`Transaction failed to delete Pokémon ${id}: ${transactionTarget.error?.message}`));
+        console.error(`Transaction error deleting pokemon ${id}: ${transactionTarget.error?.message}`);
+        reject(new Error(`Transaction failed to delete pokemon ${id}: ${transactionTarget.error?.message}`));
       };
 
     } catch (error: any) {

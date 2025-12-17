@@ -1,0 +1,48 @@
+/* Custom animations for enhanced UX */
+@keyframes token-pulse {
+  0% {
+    transform: scale(1);
+    color: inherit;
+  }
+  50% {
+    transform: scale(1.1);
+    color: #4f46e5; /* Tailwind indigo-600 */
+  }
+  100% {
+    transform: scale(1);
+    color: inherit;
+  }
+}
+
+.animate-token-pulse {
+  animation: token-pulse 0.5s ease-in-out;
+}
+
+@keyframes new-pokemon-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-new-pokemon-reveal {
+  animation: new-pokemon-reveal 0.5s ease-out forwards;
+}
+
+@keyframes temporary-ring-pulse {
+  0% {
+    box-shadow: 0 0 0px rgba(99, 102, 241, 0); /* ring-indigo-500 */
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.7); /* ring-indigo-500 with opacity */
+  }
+  100% {
+    box-shadow: 0 0 0px rgba(99, 102, 241, 0);
+  }
+}
+.animate-temporary-ring {
+  animation: temporary-ring-pulse 1.5s ease-out forwards;
+}

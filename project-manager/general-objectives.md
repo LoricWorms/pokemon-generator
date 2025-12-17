@@ -1,24 +1,25 @@
-# General Project Objectives: Pokémon Generation Application
+# General Project Objectives: Pokémon Generator Application
 
-This application aims to provide an interactive and engaging experience for generating and collecting unique Pokémon using a text-to-image AI model.
+This application aims to provide a fundamental interactive experience for generating, collecting, and managing Pokémon using client-side IndexedDB.
 
 ## Core Purpose
 
-The primary goal is to demonstrate an AI-powered image generation system within a fun, gamified context, while leveraging client-side persistent storage.
+The primary goal is to simulate a Pokémon generation and collection game using a React frontend with IndexedDB for local data persistence. It will demonstrate basic CRUD (Create, Read, Update, Delete) operations, resource management (tokens), and a scoring system.
 
 ## Key Objectives
 
-1.  **AI-Powered Pokémon Generation:** Allow users to generate unique Pokémon visuals and metadata (name, rarity) by interacting with an external text-to-image AI API.
-2.  **Resource Management (Tokens):** Implement a token-based economy where users start with 100 tokens, spend 10 tokens per generation, and earn 5 tokens for selling a Pokémon. This introduces a strategic element.
-3.  **Client-Side Persistence:** Ensure all generated Pokémon and user's token balance are stored locally using IndexedDB, allowing for offline access and data persistence across sessions.
-4.  **Collection Management:** Provide a user interface for viewing and managing their collection of generated Pokémon.
-5.  **Interactive User Experience:** Offer a fluid and visually appealing interface for generating, collecting, and selling Pokémon.
-6.  **Educational Demonstration:** Serve as a practical example of integrating AI APIs with modern frontend frameworks and client-side data storage solutions.
+1.  **Client-Side Persistence:** Ensure all generated Pokémon and the user's token balance are stored locally using IndexedDB, allowing for offline access and data persistence across sessions.
+2.  **Pokémon Generation & Collection:** Allow users to "generate" new Pokémon, each with a name, image, rarity, and score. These Pokémon should be added to the user's collection.
+3.  **Resource Management (Tokens):** Implement a token-based economy where users start with 100 tokens, spend 10 tokens per Pokémon generation, and earn tokens for selling Pokémon based on their rarity (Common: 5, Uncommon: 15, Rare: 30, Epic: 60, Legendary: 100).
+4.  **Pokédex Scoring:** Calculate and display a cumulative "Pokédex Score" based on the scores of all Pokémon in the user's collection.
+5.  **Collection Management:** Provide a user interface for viewing, filtering, sorting, and selling Pokémon from their collection.
+6.  **Interactive User Experience:** Offer a fluid and visually appealing interface that aligns with the Pokémon theme.
+7.  **Educational Demonstration:** Serve as a practical example of integrating client-side data storage solutions with modern frontend frameworks and external (simulated) API interactions.
 
 ## Guiding Principles
 
-*   **User Engagement:** The application should be fun and encourage repeated interaction.
+*   **User Engagement:** The application should be fun, intuitive, and encourage continuous interaction with the generation and collection mechanics.
 *   **Data Integrity:** Ensure reliable storage and retrieval of user data (Pokémon and tokens).
-*   **Clarity:** User interface and interactions should be intuitive and easy to understand.
-*   **Performance:** Optimize for a smooth user experience, especially during image generation and collection display.
-*   **Responsiveness:** The application should work well across various device sizes.
+*   **Clarity:** User interface and interactions should be easy to understand, even for new users.
+*   **Performance:** Optimize for a smooth user experience during Pokémon generation, collection display, and other data operations.
+*   **Responsiveness:** The application should work well across various device sizes (mobile, tablet, desktop).

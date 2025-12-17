@@ -1,5 +1,5 @@
 {
-  "name": "Copy of Pokémon Generation App",
-  "description": "An interactive React application for generating and collecting unique Pokémon using an AI image model, featuring a token-based economy and client-side persistence with IndexedDB.",
+  "name": "Pokémon Generator",
+  "description": "A fun React application demonstrating client-side data persistence with IndexedDB, allowing users to generate, collect, and manage unique Pokémon.",
   "requestFramePermissions": []
 }

@@ -16,3 +16,10 @@ the UI needs to expose.
 - Surface undocumented gaps or inconsistencies you discover while implementing features.
 - Align component naming, user-facing labels, and validation messages with terminology used in the docs.
 - Add follow-up documentation updates whenever UI changes require API documentation adjustments.
+- **Maintain `project-manager/tasks.md` diligently:**
+    - On every run, read and update the `tasks.md` file.
+    - Add new tasks as checkboxes under the "Planned" section.
+    - Move tasks from "Planned" to "On Progress" when you start working on them.
+    - Move tasks from "On Progress" to "Done" when they are completed.
+    - Ensure completed tasks are checked `[x]`.
+    - Provide concise, descriptive task names.
