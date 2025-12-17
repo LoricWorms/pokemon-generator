@@ -24,14 +24,14 @@ Tasks are categorized by their status: Done, On Progress, and Planned.
 - [x] Add visual feedback for token changes (e.g., animations when tokens are gained/spent)
 - [x] Re-introduce Pokédex UI: Display Pokémon score/sale value and cumulative score.
 - [x] Implement Pokédex UI: Add rarity filter functionality for Pokémon collection.
+- [x] Implement Pokédex UI: Add sort order functionality (date, score) for Pokémon collection.
+- [x] Implement Pokédex UI: Add pagination for Pokémon collection.
+- [x] Implement Pokédex UI: Add Pokémon details modal for individual Pokémon.
 
 ## On Progress
 
 ## Planned
 
-- [ ] Implement Pokédex UI: Add sort order functionality (date, score) for Pokémon collection.
-- [ ] Implement Pokédex UI: Add pagination for Pokémon collection.
-- [ ] Implement Pokédex UI: Add Pokémon details modal for individual Pokémon.
 - [ ] Implement local storage for user tokens and initial setup (partially done via IndexedDB, but ensure robust first-time user experience)
 - [ ] Add unit/integration tests
 - [ ] Optimize Pokémon loading and display for large collections

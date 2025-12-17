@@ -1,7 +1,7 @@
 // App.tsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Plus, DollarSign, Loader2, Zap, Trophy, HelpCircle, ListFilter } from 'lucide-react'; // Added ListFilter icon for rarity filter
-import { Pokemon, UserSetting, DBStatus, AppAlert, AlertType, PokemonRarity, PIKACHU_IMAGE_URL } from './types';
+import { Plus, DollarSign, Loader2, Zap, Trophy, HelpCircle, ListFilter, ArrowDownWideNarrow, ArrowLeft, ArrowRight, Info } from 'lucide-react';
+import { Pokemon, UserSetting, DBStatus, AppAlert, AlertType, PokemonRarity, PIKACHU_IMAGE_URL, SortOrder } from './types';
 import { openDB, addPokemon, getAllPokemon, deletePokemon, getUserSetting, putUserSetting } from './services/indexedDbService';
 import { generatePokemon, POKEMON_RARITY_DETAILS, RARITY_SALE_VALUES } from './services/pokemonApiService';
 import Button from './components/Button';
@@ -20,7 +20,15 @@ function App() {
   const [loadingSell, setLoadingSell] = useState<number | null>(null);
   const [showRarityGuideModal, setShowRarityGuideModal] = useState<boolean>(false);
   const [isTokenPulsing, setIsTokenPulsing] = useState<boolean>(false);
-  const [selectedRarityFilter, setSelectedRarityFilter] = useState<PokemonRarity | 'All'>('All'); // New state for rarity filter
+  const [selectedRarityFilter, setSelectedRarityFilter] = useState<PokemonRarity | 'All'>('All');
+  const [selectedSortOrder, setSelectedSortOrder] = useState<SortOrder>(SortOrder.DATE_DESC);
+  // States for Pagination
+  const [pokemonsPerPage] = useState(9); // Display 9 pokemons per page
+  const [currentPage, setCurrentPage] = useState(1);
+  // States for Pokemon Details Modal
+  const [selectedPokemonForDetails, setSelectedPokemonForDetails] = useState<Pokemon | null>(null);
+  const [showPokemonDetailsModal, setShowPokemonDetailsModal] = useState<boolean>(false);
+
 
   const showAlert = (message: string, type: AlertType, title?: string) => {
     setAlert({ isOpen: true, message, type, title: title || type.charAt(0).toUpperCase() + type.slice(1).toLowerCase() });
@@ -131,14 +139,59 @@ function App() {
     }
   };
 
-  // Filtered pokemons based on selectedRarityFilter
-  const filteredPokemons = useMemo(() => {
-    if (selectedRarityFilter === 'All') {
-      return pokemons;
-    }
-    return pokemons.filter(pokemon => pokemon.rarity === selectedRarityFilter);
-  }, [pokemons, selectedRarityFilter]);
+  // Filtered and sorted pokemons for display, then paginated
+  const filteredAndSortedPokemons = useMemo(() => {
+    let currentPokemons = pokemons;
 
+    // Apply rarity filter
+    if (selectedRarityFilter !== 'All') {
+      currentPokemons = currentPokemons.filter(pokemon => pokemon.rarity === selectedRarityFilter);
+    }
+
+    // Apply sort order
+    currentPokemons = [...currentPokemons].sort((a, b) => {
+      switch (selectedSortOrder) {
+        case SortOrder.DATE_ASC:
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case SortOrder.DATE_DESC:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case SortOrder.SCORE_ASC:
+          return a.score - b.score;
+        case SortOrder.SCORE_DESC:
+          return b.score - a.score;
+        default:
+          return 0;
+      }
+    });
+    return currentPokemons;
+  }, [pokemons, selectedRarityFilter, selectedSortOrder]);
+
+  const indexOfLastPokemon = currentPage * pokemonsPerPage;
+  const indexOfFirstPokemon = indexOfLastPokemon - pokemonsPerPage;
+  const displayedPokemons = filteredAndSortedPokemons.slice(indexOfFirstPokemon, indexOfLastPokemon);
+
+  const totalFilteredPokemons = filteredAndSortedPokemons.length;
+  const totalPages = Math.ceil(totalFilteredPokemons / pokemonsPerPage);
+
+  const handlePageChange = (pageNumber: number) => {
+    if (pageNumber < 1 || pageNumber > totalPages) return;
+    setCurrentPage(pageNumber);
+  };
+
+  // Reset current page to 1 when filters or sort order changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedRarityFilter, selectedSortOrder]);
+
+  const handleInspectPokemon = (pokemon: Pokemon) => {
+    setSelectedPokemonForDetails(pokemon);
+    setShowPokemonDetailsModal(true);
+  };
+
+  const closePokemonDetailsModal = () => {
+    setSelectedPokemonForDetails(null);
+    setShowPokemonDetailsModal(false);
+  };
 
   return (
     <div className="flex flex-col items-center w-full">
@@ -165,7 +218,7 @@ function App() {
             disabled={loadingGenerate || dbStatus !== DBStatus.READY || tokens < GENERATION_COST}
             size="sm"
             className="text-base py-2 w-full md:w-auto"
-            aria-label="Generate new Pokémon"
+            aria-label="Générer un nouveau Pokémon"
           >
             Générer un nouveau Pokémon (Coût: {GENERATION_COST})
           </Button>
@@ -174,10 +227,10 @@ function App() {
             Icon={HelpCircle}
             variant="secondary"
             size="sm"
-            className="text-base py-2 w-full md:w-auto"
-            aria-label="Show Pokémon Rarity Guide"
+            className="w-9 h-9 p-0 rounded-full"
+            aria-label="Afficher le guide de rareté"
           >
-            Guide de Rareté
+            {/* Explicitly empty children for icon-only button */}
           </Button>
         </div>
       </div>
@@ -191,35 +244,59 @@ function App() {
 
       {dbStatus === DBStatus.READY && (
         <>
-          <div className="flex justify-between items-center w-full mb-4 self-start">
+          <div className="flex flex-col sm:flex-row justify-between items-center w-full mb-4 self-start gap-4">
             <h2 className="text-2xl font-bold text-gray-600">Votre Collection de Pokémon</h2>
-            {pokemons.length > 0 && (
-              <div className="relative flex items-center gap-2">
-                <ListFilter className="h-5 w-5 text-gray-600" />
-                <select
-                  value={selectedRarityFilter}
-                  onChange={(e) => setSelectedRarityFilter(e.target.value as PokemonRarity | 'All')}
-                  className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm"
-                  aria-label="Filter Pokémon by Rarity"
-                >
-                  <option value="All">Toutes les raretés</option>
-                  {Object.values(PokemonRarity).map((rarity) => (
-                    <option key={rarity} value={rarity}>
-                      {rarity}
-                    </option>
-                  ))}
-                </select>
+            {(pokemons.length > 0 || selectedRarityFilter !== 'All' || selectedSortOrder !== SortOrder.DATE_DESC) && (
+              <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                {/* Rarity Filter */}
+                <div className="relative flex items-center gap-2 w-full sm:w-auto">
+                  <ListFilter className="h-5 w-5 text-gray-600" />
+                  <select
+                    value={selectedRarityFilter}
+                    onChange={(e) => setSelectedRarityFilter(e.target.value as PokemonRarity | 'All')}
+                    className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm"
+                    aria-label="Filtrer les Pokémon par rareté"
+                  >
+                    <option value="All">Toutes les raretés</option>
+                    {Object.values(PokemonRarity).map((rarity) => (
+                      <option key={rarity} value={rarity}>
+                        {rarity}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Sort Order */}
+                <div className="relative flex items-center gap-2 w-full sm:w-auto">
+                  <ArrowDownWideNarrow className="h-5 w-5 text-gray-600" />
+                  <select
+                    value={selectedSortOrder}
+                    onChange={(e) => setSelectedSortOrder(e.target.value as SortOrder)}
+                    className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm"
+                    aria-label="Trier les Pokémon par"
+                  >
+                    {Object.values(SortOrder).map((order) => (
+                      <option key={order} value={order}>
+                        {order}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             )}
           </div>
 
-          {filteredPokemons.length === 0 ? (
+          {displayedPokemons.length === 0 && totalFilteredPokemons === 0 ? (
             <p className="text-gray-500 text-center py-8 text-lg">
-              Aucun Pokémon dans votre collection ou ne correspond au filtre.
+              Aucun Pokémon dans votre collection. Générez-en un !
+            </p>
+          ) : displayedPokemons.length === 0 && totalFilteredPokemons > 0 ? (
+            <p className="text-gray-500 text-center py-8 text-lg">
+              Aucun Pokémon ne correspond aux filtres/tri sur cette page.
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-              {filteredPokemons.map((pokemon) => (
+              {displayedPokemons.map((pokemon) => (
                 <div
                   key={pokemon.id}
                   className="flex flex-col items-center p-4 bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200"
@@ -233,20 +310,65 @@ function App() {
                   <p className="text-xs text-gray-500 mt-2">Valeur Pokédex: <span className="font-semibold text-gray-700">{pokemon.score}</span></p>
                   <p className="text-xs text-gray-500 mb-3">Profit de revente (Jetons): <span className="font-semibold text-yellow-600">{RARITY_SALE_VALUES[pokemon.rarity]}</span></p>
 
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    Icon={DollarSign}
-                    onClick={() => handleSellPokemon(pokemon)}
-                    loading={loadingSell === pokemon.id}
-                    disabled={loadingSell !== null}
-                    aria-label={`Sell Pokémon: ${pokemon.name}`}
-                    className="w-full"
-                  >
-                    Vendre ({RARITY_SALE_VALUES[pokemon.rarity]} Jetons)
-                  </Button>
+                  <div className="flex gap-2 mt-3 w-full">
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      Icon={DollarSign}
+                      onClick={() => handleSellPokemon(pokemon)}
+                      loading={loadingSell === pokemon.id}
+                      disabled={loadingSell !== null}
+                      aria-label={`Vendre le Pokémon: ${pokemon.name}`}
+                      className="flex-grow"
+                    >
+                      Vendre ({RARITY_SALE_VALUES[pokemon.rarity]} Jetons)
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      Icon={Info}
+                      onClick={() => handleInspectPokemon(pokemon)}
+                      aria-label={`Voir les détails du Pokémon: ${pokemon.name}`}
+                      className="flex-none p-0 w-9 h-9 rounded-full"
+                    >
+                      {/* Empty children for icon-only button */}
+                    </Button>
+                  </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {totalFilteredPokemons > pokemonsPerPage && (
+            <div className="flex items-center justify-center mt-6 gap-2">
+              {/* Added empty children to satisfy ButtonProps */}
+              <Button
+                Icon={ArrowLeft}
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                variant="secondary"
+                size="sm"
+                className="p-0 w-9 h-9 rounded-full"
+                aria-label="Page précédente"
+              >
+                {/* Empty children */}
+              </Button>
+              <span className="text-gray-700 font-medium">
+                Page {currentPage} sur {totalPages}
+              </span>
+              {/* Added empty children to satisfy ButtonProps */}
+              <Button
+                Icon={ArrowRight}
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                variant="secondary"
+                size="sm"
+                className="p-0 w-9 h-9 rounded-full"
+                aria-label="Page suivante"
+              >
+                {/* Empty children */}
+              </Button>
             </div>
           )}
         </>
@@ -277,6 +399,34 @@ function App() {
           })}
         </ul>
       </Modal>
+
+      {/* Pokemon Details Modal */}
+      {selectedPokemonForDetails && (
+        <Modal
+          alert={{
+            isOpen: showPokemonDetailsModal,
+            type: AlertType.INFO,
+            title: `Détails de ${selectedPokemonForDetails.name}`,
+            message: '' // Content rendered as children
+          }}
+          onClose={closePokemonDetailsModal}
+        >
+          <div className="flex flex-col items-center p-4">
+            <img
+              src={selectedPokemonForDetails.image_url}
+              alt={selectedPokemonForDetails.name}
+              className="w-32 h-32 mb-4 pixelated"
+            />
+            <h4 className="text-2xl font-bold text-gray-800 mb-2">{selectedPokemonForDetails.name}</h4>
+            <p className={`text-lg font-medium mb-1 ${getRarityColorClass(selectedPokemonForDetails.rarity)}`}>
+              Rareté: {selectedPokemonForDetails.rarity}
+            </p>
+            <p className="text-md text-gray-600 mb-1">Score Pokédex: <span className="font-semibold">{selectedPokemonForDetails.score}</span></p>
+            <p className="text-md text-gray-600 mb-1">Profit de revente: <span className="font-semibold text-yellow-600">{RARITY_SALE_VALUES[selectedPokemonForDetails.rarity]} Jetons</span></p>
+            <p className="text-sm text-gray-500 mt-2">Généré le: {new Date(selectedPokemonForDetails.created_at).toLocaleDateString()}</p>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
