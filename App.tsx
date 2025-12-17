@@ -1,7 +1,7 @@
 // App.tsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Plus, DollarSign, Loader2, Zap, Trophy, HelpCircle, ListFilter, ArrowDownWideNarrow, ArrowLeft, ArrowRight, Info } from 'lucide-react';
-import { Pokemon, UserSetting, DBStatus, AppAlert, AlertType, PokemonRarity, PIKACHU_IMAGE_URL, SortOrder } from './types';
+import { Pokemon, UserSetting, DBStatus, AppAlert, AlertType, PokemonRarity, PIKACHU_IMAGE_URL, SortOrder, ACCUMULATED_SALE_PROFIT_KEY } from './types';
 import { openDB, addPokemon, getAllPokemon, deletePokemon, getUserSetting, putUserSetting } from './services/indexedDbService';
 import { generatePokemon, POKEMON_RARITY_DETAILS, RARITY_SALE_VALUES } from './services/pokemonApiService';
 import Button from './components/Button';
@@ -13,7 +13,8 @@ const GENERATION_COST = 10;
 function App() {
   const [pokemons, setPokemons] = useState<Pokemon[]>([]);
   const [tokens, setTokens] = useState<number>(0);
-  const [pokedexScore, setPokedexScore] = useState<number>(0);
+  const [overallScore, setOverallScore] = useState<number>(0); // Unified score
+  const [accumulatedSaleProfit, setAccumulatedSaleProfit] = useState<number>(0); // Persistent part of the overall score
   const [dbStatus, setDbStatus] = useState<DBStatus>(DBStatus.INITIALIZING);
   const [alert, setAlert] = useState<AppAlert>({ isOpen: false, message: '', type: AlertType.INFO, title: '' });
   const [loadingGenerate, setLoadingGenerate] = useState<boolean>(false);
@@ -54,6 +55,14 @@ function App() {
       }
       setTokens(userTokens.value as number);
 
+      let userAccumulatedSaleProfit = await getUserSetting(ACCUMULATED_SALE_PROFIT_KEY);
+      if (!userAccumulatedSaleProfit) {
+        userAccumulatedSaleProfit = { key: ACCUMULATED_SALE_PROFIT_KEY, value: 0 };
+        await putUserSetting(userAccumulatedSaleProfit);
+        console.log(`Initialized accumulated sale profit to 0`);
+      }
+      setAccumulatedSaleProfit(userAccumulatedSaleProfit.value as number);
+
       setDbStatus(DBStatus.READY);
     } catch (error: any) {
       console.error("Error loading app data:", error);
@@ -66,11 +75,11 @@ function App() {
     loadAppData();
   }, [loadAppData]);
 
-  // Effect to calculate Pokedex Score whenever pokemons change
+  // Effect to calculate Overall Score whenever pokemons or accumulatedSaleProfit changes
   useEffect(() => {
-    const totalScore = pokemons.reduce((sum, pokemon) => sum + pokemon.score, 0);
-    setPokedexScore(totalScore);
-  }, [pokemons]);
+    const currentCollectionScore = pokemons.reduce((sum, pokemon) => sum + pokemon.score, 0);
+    setOverallScore(currentCollectionScore + accumulatedSaleProfit);
+  }, [pokemons, accumulatedSaleProfit]);
 
   const updateTokens = useCallback(async (amount: number) => {
     const newTokens = tokens + amount;
@@ -117,6 +126,13 @@ function App() {
 
       const profit = RARITY_SALE_VALUES[pokemonToSell.rarity];
       await updateTokens(profit);
+
+      // Update and persist accumulated sale profit
+      setAccumulatedSaleProfit(prevProfit => {
+        const newAccumulatedSaleProfit = prevProfit + profit;
+        putUserSetting({ key: ACCUMULATED_SALE_PROFIT_KEY, value: newAccumulatedSaleProfit });
+        return newAccumulatedSaleProfit;
+      });
 
       showAlert(`Pokémon ${pokemonToSell.name} vendu avec succès ! Vous avez gagné ${profit} jetons.`, AlertType.SUCCESS, 'Pokémon Vendu !');
     } catch (error: any) {
@@ -207,7 +223,7 @@ function App() {
             <Zap className="h-5 w-5 text-yellow-500 fill-current" /> Jetons: <span className="text-xl font-bold">{tokens}</span>
           </span>
           <span className="text-indigo-800 text-lg font-semibold flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-amber-500 fill-current" /> Score Pokédex: <span className="text-xl font-bold">{pokedexScore}</span>
+            <Trophy className="h-5 w-5 text-amber-500 fill-current" /> Score Total: <span className="text-xl font-bold">{overallScore}</span>
           </span>
         </div>
         <div className="flex flex-col md:flex-row items-center gap-2 mt-4 md:mt-0">
@@ -222,6 +238,7 @@ function App() {
           >
             Générer un nouveau Pokémon (Coût: {GENERATION_COST})
           </Button>
+          {/* Removed empty children prop for icon-only button */}
           <Button
             onClick={() => setShowRarityGuideModal(true)}
             Icon={HelpCircle}
@@ -229,9 +246,7 @@ function App() {
             size="sm"
             className="w-9 h-9 p-0 rounded-full"
             aria-label="Afficher le guide de rareté"
-          >
-            {/* Explicitly empty children for icon-only button */}
-          </Button>
+          />
         </div>
       </div>
 
@@ -323,6 +338,7 @@ function App() {
                     >
                       Vendre ({RARITY_SALE_VALUES[pokemon.rarity]} Jetons)
                     </Button>
+                    {/* Removed empty children prop for icon-only button */}
                     <Button
                       variant="secondary"
                       size="sm"
@@ -330,9 +346,7 @@ function App() {
                       onClick={() => handleInspectPokemon(pokemon)}
                       aria-label={`Voir les détails du Pokémon: ${pokemon.name}`}
                       className="flex-none p-0 w-9 h-9 rounded-full"
-                    >
-                      {/* Empty children for icon-only button */}
-                    </Button>
+                    />
                   </div>
                 </div>
               ))}
@@ -342,7 +356,7 @@ function App() {
           {/* Pagination Controls */}
           {totalFilteredPokemons > pokemonsPerPage && (
             <div className="flex items-center justify-center mt-6 gap-2">
-              {/* Added empty children to satisfy ButtonProps */}
+              {/* Removed empty children prop for icon-only button */}
               <Button
                 Icon={ArrowLeft}
                 onClick={() => handlePageChange(currentPage - 1)}
@@ -351,13 +365,11 @@ function App() {
                 size="sm"
                 className="p-0 w-9 h-9 rounded-full"
                 aria-label="Page précédente"
-              >
-                {/* Empty children */}
-              </Button>
+              />
               <span className="text-gray-700 font-medium">
                 Page {currentPage} sur {totalPages}
               </span>
-              {/* Added empty children to satisfy ButtonProps */}
+              {/* Removed empty children prop for icon-only button */}
               <Button
                 Icon={ArrowRight}
                 onClick={() => handlePageChange(currentPage + 1)}
@@ -366,9 +378,7 @@ function App() {
                 size="sm"
                 className="p-0 w-9 h-9 rounded-full"
                 aria-label="Page suivante"
-              >
-                {/* Empty children */}
-              </Button>
+              />
             </div>
           )}
         </>

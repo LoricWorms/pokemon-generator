@@ -53,3 +53,5 @@ export interface AppAlert {
 }
 
 export const PIKACHU_IMAGE_URL = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png';
+
+export const ACCUMULATED_SALE_PROFIT_KEY = 'accumulatedSaleProfit';

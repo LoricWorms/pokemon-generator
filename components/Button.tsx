@@ -3,7 +3,7 @@ import React from 'react';
 import { LucideIcon } from 'lucide-react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  children: React.ReactNode;
+  children?: React.ReactNode; // Made children optional
   variant?: 'primary' | 'secondary' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   Icon?: LucideIcon;
@@ -34,7 +34,9 @@ const Button: React.FC<ButtonProps> = ({
   };
 
   // Determine if children content is effectively empty or null
-  const hasChildren = React.Children.count(children) > 0 || (typeof children === 'string' && children.trim() !== '');
+  // This now correctly handles 'undefined' children when the prop is omitted
+  const hasChildren = children !== undefined && children !== null &&
+                      (typeof children !== 'string' || children.trim() !== '');
 
   const loadingStyles = loading ? 'opacity-70 cursor-not-allowed' : '';
 
@@ -52,7 +54,7 @@ const Button: React.FC<ButtonProps> = ({
       ) : (
         Icon && <Icon className={`${hasChildren ? 'mr-2' : ''} h-5 w-5`} />
       )}
-      {children}
+      {hasChildren && children}
     </button>
   );
 };

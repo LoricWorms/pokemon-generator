@@ -27,11 +27,13 @@ Tasks are categorized by their status: Done, On Progress, and Planned.
 - [x] Implement Pokédex UI: Add sort order functionality (date, score) for Pokémon collection.
 - [x] Implement Pokédex UI: Add pagination for Pokémon collection.
 - [x] Implement Pokédex UI: Add Pokémon details modal for individual Pokémon.
+- [x] Implement local storage for user tokens and initial setup (partially done via IndexedDB, but ensure robust first-time user experience)
+- [x] Système de scoring unifié : Fusion des scores Pokédex et de Vente en un score total unique.
+- [x] Correction de l'affichage des icônes sur les boutons "icône seulement" en omettant la prop 'children' vide.
 
 ## On Progress
 
 ## Planned
 
-- [ ] Implement local storage for user tokens and initial setup (partially done via IndexedDB, but ensure robust first-time user experience)
 - [ ] Add unit/integration tests
 - [ ] Optimize Pokémon loading and display for large collections
