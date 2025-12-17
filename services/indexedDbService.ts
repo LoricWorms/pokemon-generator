@@ -1,10 +1,8 @@
 // services/indexedDbService.ts
-import { Pokemon, UserSetting } from '../types';
+import { Pokemon, UserSetting, SessionScore, POKEMON_STORE_NAME, USER_SETTINGS_STORE_NAME, SESSION_SCORES_STORE_NAME } from '../types';
 
 const DB_NAME = 'PokemonGeneratorDB';
-const DB_VERSION = 1; // Increment this to trigger onupgradeneeded
-const POKEMON_STORE_NAME = 'pokemons';
-const USER_SETTINGS_STORE_NAME = 'userSettings';
+const DB_VERSION = 3; // Incremented to support nickname in SessionScore
 
 let db: IDBDatabase | null = null;
 
@@ -26,14 +24,24 @@ export const openDB = (): Promise<IDBDatabase> => {
       const dbTarget = event.target as IDBOpenDBRequest;
       const dbInstance = dbTarget.result;
 
+      // Create POKEMON_STORE_NAME if it doesn't exist
       if (!dbInstance.objectStoreNames.contains(POKEMON_STORE_NAME)) {
         dbInstance.createObjectStore(POKEMON_STORE_NAME, { keyPath: 'id', autoIncrement: true });
         console.log(`Object store '${POKEMON_STORE_NAME}' created.`);
       }
 
+      // Create USER_SETTINGS_STORE_NAME if it doesn't exist
       if (!dbInstance.objectStoreNames.contains(USER_SETTINGS_STORE_NAME)) {
         dbInstance.createObjectStore(USER_SETTINGS_STORE_NAME, { keyPath: 'key' });
         console.log(`Object store '${USER_SETTINGS_STORE_NAME}' created.`);
+      }
+
+      // Create SESSION_SCORES_STORE_NAME if it doesn't exist
+      // No explicit migration needed for 'nickname' field as it's optional and non-indexed.
+      // Existing objects will simply not have the 'nickname' property.
+      if (!dbInstance.objectStoreNames.contains(SESSION_SCORES_STORE_NAME)) {
+        dbInstance.createObjectStore(SESSION_SCORES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+        console.log(`Object store '${SESSION_SCORES_STORE_NAME}' created.`);
       }
     };
 
@@ -218,6 +226,89 @@ export const putUserSetting = (setting: UserSetting): Promise<void> => {
         console.error(`Transaction error putting user setting '${setting.key}': ${transactionTarget.error?.message}`);
         reject(new Error(`Transaction failed to put user setting '${setting.key}': ${transactionTarget.error?.message}`));
       };
+    } catch (error: any) {
+      reject(error);
+    }
+  });
+};
+
+/**
+ * Adds a new session score to the object store.
+ * @param sessionScoreData - The SessionScore data to add (excluding the ID).
+ * @returns A Promise that resolves with the newly created SessionScore, including its ID.
+ */
+export const addSessionScore = (sessionScoreData: Omit<SessionScore, 'id'>): Promise<SessionScore> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const database = await openDB();
+      const transaction = database.transaction([SESSION_SCORES_STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(SESSION_SCORES_STORE_NAME);
+
+      const request = store.add(sessionScoreData);
+
+      request.onsuccess = () => {
+        const addedScore: SessionScore = { ...sessionScoreData, id: request.result as number };
+        console.log(`Session score added with ID: ${addedScore.id}`);
+        resolve(addedScore);
+      };
+
+      request.onerror = (event: Event) => {
+        const requestTarget = event.target as IDBRequest;
+        console.error(`Error adding session score: ${requestTarget.error?.message}`);
+        reject(new Error(`Failed to add session score: ${requestTarget.error?.message}`));
+      };
+
+      transaction.onerror = (event: Event) => {
+        const transactionTarget = event.target as IDBTransaction;
+        console.error(`Transaction error adding session score: ${transactionTarget.error?.message}`);
+        reject(new Error(`Transaction failed to add session score: ${transactionTarget.error?.message}`));
+      };
+
+    } catch (error: any) {
+      reject(error);
+    }
+  });
+};
+
+/**
+ * Retrieves the top N session scores from the object store, sorted by score descending.
+ * @param limit - The maximum number of scores to retrieve. Defaults to 5.
+ * @returns A Promise that resolves with an array of SessionScore.
+ */
+export const getTopSessionScores = (limit: number = 5): Promise<SessionScore[]> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const database = await openDB();
+      const transaction = database.transaction([SESSION_SCORES_STORE_NAME], 'readonly');
+      const store = transaction.objectStore(SESSION_SCORES_STORE_NAME);
+      const request = store.openCursor(null, 'prev'); // 'prev' for descending order of key (which is ID, not score)
+
+      const scores: SessionScore[] = [];
+      request.onsuccess = (event: Event) => {
+        const cursor = (event.target as IDBRequest).result;
+        if (cursor) {
+          scores.push(cursor.value as SessionScore);
+          cursor.continue();
+        } else {
+          // Sort by score in descending order after fetching all
+          const sortedScores = scores.sort((a, b) => b.score - a.score).slice(0, limit);
+          console.log(`Top ${limit} session scores retrieved.`);
+          resolve(sortedScores);
+        }
+      };
+
+      request.onerror = (event: Event) => {
+        const requestTarget = event.target as IDBRequest;
+        console.error(`Error getting top session scores: ${requestTarget.error?.message}`);
+        reject(new Error(`Failed to get top session scores: ${requestTarget.error?.message}`));
+      };
+
+      transaction.onerror = (event: Event) => {
+        const transactionTarget = event.target as IDBTransaction;
+        console.error(`Transaction error getting top session scores: ${transactionTarget.error?.message}`);
+        reject(new Error(`Transaction failed to get top session scores: ${transactionTarget.error?.message}`));
+      };
+
     } catch (error: any) {
       reject(error);
     }

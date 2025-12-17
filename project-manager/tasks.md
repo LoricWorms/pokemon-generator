@@ -30,6 +30,16 @@ Tasks are categorized by their status: Done, On Progress, and Planned.
 - [x] Implement local storage for user tokens and initial setup (partially done via IndexedDB, but ensure robust first-time user experience)
 - [x] Système de scoring unifié : Fusion des scores Pokédex et de Vente en un score total unique.
 - [x] Correction de l'affichage des icônes sur les boutons "icône seulement" en omettant la prop 'children' vide.
+- [x] Ajout de l'interface SessionScore et de la constante SESSION_SCORES_STORE_NAME dans types.ts.
+- [x] Implémentation de la nouvelle objectStore 'sessionScores' et incrémentation de DB_VERSION dans indexedDbService.ts.
+- [x] Ajout des fonctions addSessionScore et getTopSessionScores dans indexedDbService.ts.
+- [x] Intégration du système de session scoring dans App.tsx (état, fonctions de sauvegarde/chargement, boutons, modal).
+- [x] Mise à jour de docs/introduction.md pour documenter le système de session scoring.
+- [x] Réorganisation des boutons de modal/sauvegarde/top scores dans une ligne dédiée entre l'en-tête et la collection de Pokémon.
+- [x] Mise à jour de l'interface SessionScore dans types.ts pour inclure un champ de pseudo optionnel.
+- [x] Incrémentation de DB_VERSION et mise à jour de addSessionScore dans indexedDbService.ts pour prendre en charge le pseudo.
+- [x] Ajout d'un champ de saisie de pseudo dans App.tsx et mise à jour de la logique de sauvegarde du score.
+- [x] Affichage du pseudo dans le modal "Top 5 Scores de Session".
 
 ## On Progress
 

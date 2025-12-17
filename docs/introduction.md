@@ -4,7 +4,7 @@ Cette application propose une expérience ludique de génération et de gestion 
 
 ## Concept général
 
-L'application permet à chaque utilisateur de gérer une collection de Pokémon virtuels et un portefeuille de jetons qui reflète ses actions. Le "Pokédex Score" cumulatif de tous les Pokémon de la collection donne une valeur à l'ensemble de la collection.
+L'application permet à chaque utilisateur de gérer une collection de Pokémon virtuels et un portefeuille de jetons qui reflète ses actions. Le "Score Total" cumulatif des Pokémon de la collection et des profits de revente donne une valeur globale à la progression de l'utilisateur. De plus, les utilisateurs peuvent désormais enregistrer leurs meilleurs "Scores de Session" pour les comparer.
 
 ## Fonctionnement du système de jetons
 
@@ -20,6 +20,10 @@ L'application permet à chaque utilisateur de gérer une collection de Pokémon 
 
 Le solde, les Pokémon et les paramètres utilisateur sont sauvegardés localement pour permettre une expérience **offline**.
 
+### Système de Session Scoring
+
+Le "Score Total" de l'utilisateur (combinaison du score Pokédex actuel et des profits de vente cumulés) peut être sauvegardé manuellement en tant que "Score de Session". Ces scores sont enregistrés localement dans IndexedDB. L'application affiche un "Top 5" des meilleurs scores de session, permettant à l'utilisateur de suivre ses performances au fil du temps. Un score ne peut être sauvegardé que s'il est supérieur à 0.
+
 ## Parcours utilisateur
 
 1.  **Accueil et onboarding**
@@ -34,8 +38,8 @@ Le solde, les Pokémon et les paramètres utilisateur sont sauvegardés localeme
 4.  **Revente d'un Pokémon**
     En revendant un Pokémon, l’utilisateur en abandonne la propriété et récupère des jetons sur son solde en fonction de la rareté du Pokémon.
 
-5.  **Pokédex Score**
-    Le score de chaque Pokémon s'ajoute au "Pokédex Score" total, qui représente la valeur cumulée de la collection de l'utilisateur.
+5.  **Score Total et Scores de Session**
+    Le score de chaque Pokémon et les profits de revente s'ajoutent au "Score Total". L'utilisateur peut enregistrer ce "Score Total" comme un "Score de Session" et consulter un classement des meilleurs scores.
 
 ## Objectifs et principes
 
@@ -43,6 +47,7 @@ Le solde, les Pokémon et les paramètres utilisateur sont sauvegardés localeme
 *   Garantir une **autonomie utilisateur complète** grâce à la sauvegarde locale et à la résilience offline.
 *   Proposer une **économie interne équilibrée** et transparente.
 *   Favoriser une interaction continue entre l'action (générer) et la gestion des ressources (jetons, collection).
+*   Ajouter un aspect de **gamification** avec le système de high scores de session.
 
 ## Perspectives d’évolution
 

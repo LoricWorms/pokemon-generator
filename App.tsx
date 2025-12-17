@@ -1,8 +1,8 @@
 // App.tsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Plus, DollarSign, Loader2, Zap, Trophy, HelpCircle, ListFilter, ArrowDownWideNarrow, ArrowLeft, ArrowRight, Info } from 'lucide-react';
-import { Pokemon, UserSetting, DBStatus, AppAlert, AlertType, PokemonRarity, PIKACHU_IMAGE_URL, SortOrder, ACCUMULATED_SALE_PROFIT_KEY } from './types';
-import { openDB, addPokemon, getAllPokemon, deletePokemon, getUserSetting, putUserSetting } from './services/indexedDbService';
+import { Plus, DollarSign, Loader2, Zap, Trophy, HelpCircle, ListFilter, ArrowDownWideNarrow, ArrowLeft, ArrowRight, Info, Save, List } from 'lucide-react';
+import { Pokemon, UserSetting, DBStatus, AppAlert, AlertType, PokemonRarity, PIKACHU_IMAGE_URL, SortOrder, ACCUMULATED_SALE_PROFIT_KEY, SessionScore } from './types';
+import { openDB, addPokemon, getAllPokemon, deletePokemon, getUserSetting, putUserSetting, addSessionScore, getTopSessionScores } from './services/indexedDbService';
 import { generatePokemon, POKEMON_RARITY_DETAILS, RARITY_SALE_VALUES } from './services/pokemonApiService';
 import Button from './components/Button';
 import Modal from './components/Modal';
@@ -29,6 +29,10 @@ function App() {
   // States for Pokemon Details Modal
   const [selectedPokemonForDetails, setSelectedPokemonForDetails] = useState<Pokemon | null>(null);
   const [showPokemonDetailsModal, setShowPokemonDetailsModal] = useState<boolean>(false);
+  // States for Session Scoring
+  const [topScores, setTopScores] = useState<SessionScore[]>([]);
+  const [showTopScoresModal, setShowTopScoresModal] = useState<boolean>(false);
+  const [sessionNickname, setSessionNickname] = useState<string>(''); // New state for nickname
 
 
   const showAlert = (message: string, type: AlertType, title?: string) => {
@@ -38,6 +42,16 @@ function App() {
   const closeAlert = () => {
     setAlert({ ...alert, isOpen: false });
   };
+
+  const loadTopScores = useCallback(async () => {
+    try {
+      const fetchedTopScores = await getTopSessionScores(5); // Get top 5 scores
+      setTopScores(fetchedTopScores);
+    } catch (error: any) {
+      console.error("Error loading top scores:", error);
+      showAlert(`Failed to load top scores: ${error.message}`, AlertType.ERROR, 'Loading Top Scores Error');
+    }
+  }, []);
 
   const loadAppData = useCallback(async () => {
     try {
@@ -63,13 +77,15 @@ function App() {
       }
       setAccumulatedSaleProfit(userAccumulatedSaleProfit.value as number);
 
+      await loadTopScores(); // Load top scores on app start
+
       setDbStatus(DBStatus.READY);
     } catch (error: any) {
       console.error("Error loading app data:", error);
       setDbStatus(DBStatus.ERROR);
       showAlert(`Failed to load app data: ${error.message}`, AlertType.ERROR, 'Loading Error');
     }
-  }, []);
+  }, [loadTopScores]);
 
   useEffect(() => {
     loadAppData();
@@ -140,6 +156,22 @@ function App() {
       showAlert(`Échec de la vente du Pokémon : ${error.message}`, AlertType.ERROR, 'Vente Échouée');
     } finally {
       setLoadingSell(null);
+    }
+  };
+
+  const handleSaveSessionScore = async () => {
+    if (overallScore <= 0) {
+      showAlert('Votre score total doit être supérieur à 0 pour être sauvegardé.', AlertType.WARNING, 'Score Invalide');
+      return;
+    }
+    try {
+      await addSessionScore({ score: overallScore, date: new Date().toISOString(), nickname: sessionNickname.trim() || undefined });
+      await loadTopScores(); // Reload top scores to include the new one
+      setSessionNickname(''); // Clear nickname field after saving
+      showAlert('Score de session sauvegardé avec succès !', AlertType.SUCCESS, 'Score Sauvegardé');
+    } catch (error: any) {
+      console.error("Erreur lors de la sauvegarde du score de session :", error);
+      showAlert(`Échec de la sauvegarde du score de session : ${error.message}`, AlertType.ERROR, 'Sauvegarde Échouée');
     }
   };
 
@@ -226,7 +258,7 @@ function App() {
             <Trophy className="h-5 w-5 text-amber-500 fill-current" /> Score Total: <span className="text-xl font-bold">{overallScore}</span>
           </span>
         </div>
-        <div className="flex flex-col md:flex-row items-center gap-2 mt-4 md:mt-0">
+        <div className="flex items-center gap-2 mt-4 md:mt-0"> {/* Adjusted this div for primary action */}
           <Button
             onClick={handleGeneratePokemon}
             Icon={Plus}
@@ -238,16 +270,45 @@ function App() {
           >
             Générer un nouveau Pokémon (Coût: {GENERATION_COST})
           </Button>
-          {/* Removed empty children prop for icon-only button */}
-          <Button
-            onClick={() => setShowRarityGuideModal(true)}
-            Icon={HelpCircle}
-            variant="secondary"
-            size="sm"
-            className="w-9 h-9 p-0 rounded-full"
-            aria-label="Afficher le guide de rareté"
-          />
         </div>
+      </div>
+
+      {/* New section for modal/save/top score buttons and nickname input */}
+      <div className="flex flex-col sm:flex-row justify-center items-center gap-2 mb-6 mt-4 w-full">
+        <Button
+          onClick={() => setShowRarityGuideModal(true)}
+          Icon={HelpCircle}
+          variant="secondary"
+          size="sm"
+          className="w-9 h-9 p-0 rounded-full"
+          aria-label="Afficher le guide de rareté"
+        />
+        <input
+          type="text"
+          placeholder="Votre pseudo (optionnel)"
+          value={sessionNickname}
+          onChange={(e) => setSessionNickname(e.target.value)}
+          className="px-3 py-1.5 text-base border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full sm:w-auto max-w-xs"
+          aria-label="Pseudo pour le score de session"
+          maxLength={20}
+        />
+        <Button
+          onClick={handleSaveSessionScore}
+          Icon={Save}
+          variant="secondary"
+          size="sm"
+          className="w-9 h-9 p-0 rounded-full"
+          aria-label="Sauvegarder le score de session"
+          disabled={overallScore <= 0}
+        />
+        <Button
+          onClick={() => setShowTopScoresModal(true)}
+          Icon={List}
+          variant="secondary"
+          size="sm"
+          className="w-9 h-9 p-0 rounded-full"
+          aria-label="Voir le Top Scores"
+        />
       </div>
 
       {dbStatus === DBStatus.INITIALIZING && (
@@ -338,7 +399,6 @@ function App() {
                     >
                       Vendre ({RARITY_SALE_VALUES[pokemon.rarity]} Jetons)
                     </Button>
-                    {/* Removed empty children prop for icon-only button */}
                     <Button
                       variant="secondary"
                       size="sm"
@@ -356,7 +416,6 @@ function App() {
           {/* Pagination Controls */}
           {totalFilteredPokemons > pokemonsPerPage && (
             <div className="flex items-center justify-center mt-6 gap-2">
-              {/* Removed empty children prop for icon-only button */}
               <Button
                 Icon={ArrowLeft}
                 onClick={() => handlePageChange(currentPage - 1)}
@@ -369,7 +428,6 @@ function App() {
               <span className="text-gray-700 font-medium">
                 Page {currentPage} sur {totalPages}
               </span>
-              {/* Removed empty children prop for icon-only button */}
               <Button
                 Icon={ArrowRight}
                 onClick={() => handlePageChange(currentPage + 1)}
@@ -437,6 +495,33 @@ function App() {
           </div>
         </Modal>
       )}
+
+      {/* Top Scores Modal */}
+      <Modal
+        alert={{
+          isOpen: showTopScoresModal,
+          type: AlertType.INFO,
+          title: 'Top 5 Scores de Session',
+          message: '' // Content rendered as children
+        }}
+        onClose={() => setShowTopScoresModal(false)}
+      >
+        {topScores.length === 0 ? (
+          <p className="text-gray-700">Aucun score de session enregistré pour l'instant. Jouez et enregistrez votre meilleur score !</p>
+        ) : (
+          <ol className="list-decimal pl-5 space-y-2 text-gray-800">
+            {topScores.map((sessionScore, index) => (
+              <li key={sessionScore.id || `score-${index}`} className="flex justify-between items-center text-lg">
+                <span className="font-semibold">
+                  {sessionScore.nickname ? `${sessionScore.nickname} - ` : ''}
+                  {sessionScore.score}
+                </span>
+                <span className="text-sm text-gray-500">({new Date(sessionScore.date).toLocaleDateString()})</span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </Modal>
     </div>
   );
 }

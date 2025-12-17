@@ -52,6 +52,17 @@ export interface AppAlert {
   title: string;
 }
 
+export interface SessionScore {
+  id?: number; // IndexedDB key, autoIncrement
+  score: number;
+  date: string; // ISO 8601 string
+  nickname?: string; // Added optional nickname field
+}
+
 export const PIKACHU_IMAGE_URL = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png';
 
 export const ACCUMULATED_SALE_PROFIT_KEY = 'accumulatedSaleProfit';
+export const SESSION_SCORES_STORE_NAME = 'sessionScores';
+// Add constants for IndexedDB store names
+export const POKEMON_STORE_NAME = 'pokemons';
+export const USER_SETTINGS_STORE_NAME = 'userSettings';
