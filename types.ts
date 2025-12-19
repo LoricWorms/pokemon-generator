@@ -59,6 +59,12 @@ export interface SessionScore {
   nickname?: string; // Added optional nickname field
 }
 
+export enum View {
+  HOME = 'HOME',
+  COLLECTION = 'COLLECTION',
+  RANKING = 'RANKING',
+}
+
 export const PIKACHU_IMAGE_URL = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png';
 
 export const ACCUMULATED_SALE_PROFIT_KEY = 'accumulatedSaleProfit';

@@ -46,3 +46,24 @@
 .animate-temporary-ring {
   animation: temporary-ring-pulse 1.5s ease-out forwards;
 }
+
+/* Added missing navigation and view animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out forwards;
+}
+
+.pixelated {
+  image-rendering: pixelated;
+}
